@@ -27,7 +27,7 @@ const audioContext = new AudioContext();
 let isInitialized = false;
 
 const getAudioBufferByFileName = async (context: BaseAudioContext, fileName: string) => {
-  const res = await fetch(`/assets/sounds/${fileName}`);
+  const res = await fetch(`/simple-drum-machine/assets/sounds/${fileName}`);
   const arrayBuffer = await res.arrayBuffer();
   const audioBuffer = await context.decodeAudioData(arrayBuffer);
   return audioBuffer;
