@@ -109,7 +109,7 @@ class DrumMachine {
     keys.forEach((key, idx) => {
       const button = new DrumButton(key);
       button.mesh.position.x -= 5.5 - (idx % 4) * 5;
-      button.mesh.position.y -= 4 - (idx % 3) * 4;
+      button.mesh.position.y -= 4 - Math.floor(idx / 4) * 4;
       button.mesh.position.z -= 1.5;
       this.drumButtons.push(button);
       mesh.add(button.mesh);
@@ -123,6 +123,9 @@ class DrumMachine {
     this.isOn = !this.isOn;
     this.powerButton.toggle();
     this.powerMonitor.toggle();
+    this.drumButtons.forEach((drumButton) => {
+      drumButton.toggle();
+    });
   }
 }
 
