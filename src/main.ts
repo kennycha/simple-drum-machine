@@ -1,4 +1,8 @@
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import DrumCell from "./DrumCell";
+import { COLORS } from "./constant";
+import DrumMachine from "./DrumMachine";
 
 const DRUM_SOUND_FILE_NAMES = [
   "drum-fx-01.mp3",
@@ -20,6 +24,7 @@ interface DrumCellMap {
 }
 
 const audioContext = new AudioContext();
+let isInitialized = false;
 
 const getAudioBufferByFileName = async (context: BaseAudioContext, fileName: string) => {
   const res = await fetch(`/assets/sounds/${fileName}`);
@@ -70,21 +75,84 @@ const initializeDrumMachine = async () => {
   const mainBus = await buildMainBus(audioContext);
   const drumCellMap = await buildDrumCellMap(mainBus);
   bindKeyToDrumCellMap(drumCellMap);
+  isInitialized = true;
 };
 
 const onWindowLoad = () => {
-  const startButton = document.querySelector("#startButton") as HTMLButtonElement;
-  startButton.disabled = false;
-  startButton.addEventListener(
-    "click",
-    async () => {
-      await initializeDrumMachine();
-      audioContext.resume();
-      startButton.disabled = true;
-      startButton.textContent = "loaded";
-    },
-    false
-  );
+  const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const app = document.querySelector("#app");
+  if (!app) return;
+  app.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(COLORS.scene);
+
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 26.7709, 9.588);
+  scene.add(camera);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enablePan = false;
+  controls.enableZoom = false;
+  controls.maxPolarAngle = Math.PI / 3;
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(1, 3, 1);
+  directionalLight.castShadow = true;
+  const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
+  hemisphereLight.position.set(1, 3, 1);
+  hemisphereLight.castShadow = true;
+  scene.add(directionalLight, hemisphereLight);
+
+  const drumMachine = new DrumMachine();
+  controls.target = drumMachine.mesh.position.clone();
+  scene.add(drumMachine.mesh);
+
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+
+  const draw = () => {
+    renderer.render(scene, camera);
+    requestAnimationFrame(draw);
+  };
+
+  draw();
+
+  const onPointerDown = async (event: PointerEvent) => {
+    pointer.set((event.clientX / window.innerWidth - 0.5) * 2, -(event.clientY / window.innerHeight - 0.5) * 2);
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(scene.children);
+
+    if (intersects.length > 0 && intersects[0].object.name === "PowerButton") {
+      if (drumMachine.isOn) {
+        audioContext.suspend();
+      } else {
+        if (isInitialized) {
+          audioContext.resume();
+        } else {
+          await initializeDrumMachine();
+          audioContext.resume();
+        }
+      }
+      drumMachine.toggle();
+    }
+  };
+  window.addEventListener("pointerdown", onPointerDown);
+
+  const onWindowResize = () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  };
+  window.addEventListener("resize", onWindowResize);
 };
 
 window.addEventListener("load", onWindowLoad);
