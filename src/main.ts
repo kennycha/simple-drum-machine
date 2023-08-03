@@ -94,13 +94,13 @@ const onWindowLoad = () => {
   scene.background = new THREE.Color(COLORS.scene);
 
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 26.7709, 9.588);
+  camera.position.set(0, 22, 5);
   scene.add(camera);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enablePan = false;
   controls.enableZoom = false;
-  controls.maxPolarAngle = Math.PI / 3;
+  controls.maxPolarAngle = Math.PI / 6;
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
   directionalLight.position.set(1, 3, 1);

@@ -11,6 +11,8 @@ const SIZE = {
 class DrumButton {
   mesh: THREE.Mesh;
   bindedKey: string;
+  materials: { [key in "on" | "off"]: THREE.MeshStandardMaterial };
+  isPressable = false;
 
   constructor(key: string) {
     this.bindedKey = key;
@@ -32,14 +34,41 @@ class DrumButton {
       depth,
       bevelThickness: 0.3,
     });
-    const material = new THREE.MeshStandardMaterial({
+    const onMaterial = new THREE.MeshStandardMaterial({
+      color: COLORS.drumButtonOn,
+      side: THREE.DoubleSide,
+    });
+    const offMaterial = new THREE.MeshStandardMaterial({
       color: COLORS.drumButtonOff,
       side: THREE.DoubleSide,
     });
-    const mesh = new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, offMaterial);
     mesh.castShadow = true;
     mesh.receiveShadow = false;
     this.mesh = mesh;
+    this.materials = {
+      on: onMaterial,
+      off: offMaterial,
+    };
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === this.bindedKey) {
+        this.press();
+      }
+    });
+  }
+
+  toggle() {
+    this.isPressable = !this.isPressable;
+  }
+
+  press() {
+    if (!this.isPressable) return;
+
+    this.mesh.material = this.materials.on;
+    setTimeout(() => {
+      this.mesh.material = this.materials.off;
+    }, 200);
   }
 }
 

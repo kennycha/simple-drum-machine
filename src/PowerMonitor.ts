@@ -15,6 +15,7 @@ class PowerMonitor {
       transparent: true,
       opacity: 0.9,
     });
+    // @TODO Glow 추가
     const onMaterial = new THREE.MeshStandardMaterial({
       color: COLORS.powerMonitorOn,
       transparent: true,
